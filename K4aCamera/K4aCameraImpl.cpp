@@ -231,11 +231,17 @@ K4aCameraImpl::K4aCameraImpl(const size_t id, const bool master) :
 	_gGain(1.f),
 	_bGain(1.f) {
 	/* open device of current id */
-	if (!K4A_RESULT_SUCCEEDED == k4a_device_open(id, &_hDev)) {
-		std::cout << "Fail to open device of index " << id << " !" << std::endl;
+	try {
+		if (!K4A_RESULT_SUCCEEDED == k4a_device_open(id, &_hDev)) {
+			std::cout << "Fail to open device of index " << id << " !" << std::endl;
+			exit(-1);
+		}
+	}
+	catch(...) {
+		std::cerr << "[ERROR]: Fail to open device of index " << id << "!" << std::endl;
 		exit(-1);
 	}
-
+	
 	_deviceIdx = id;
 	_master = master;
 
@@ -391,10 +397,13 @@ void K4aCameraImpl::CaptureThread(std::deque<Frame>& frames,
 		if (_master) {
 			// The commander will wait until all players are ready
 			std::unique_lock<std::mutex> lk(sCommandMtx);
+
 			if (!sCommandCV.wait_for(lk, std::chrono::seconds(3), []() { return sPlayers == _selected.size() - 1; })) {
-				std::cerr << "[ERROR] FetchThread: Commander wait_for timeout" << std::endl;
+				std::cerr << "[WARNING] FetchThread: Commander wait_for timeout" << std::endl;
 				break;
 			}
+
+			
 			sPlayers = 0;
 			lk.unlock();
 
@@ -415,25 +424,24 @@ void K4aCameraImpl::CaptureThread(std::deque<Frame>& frames,
 
 			// and wait for the running signal
 			std::unique_lock<std::mutex> lk(sPlayerMtx);
+	
 			if (!sPlayerCV.wait_for(lk, std::chrono::seconds(3), [this]() { return sRun[_deviceIdx]; })) {
-				std::cerr << "[ERROR] FetchThread: Player wait_for timeout" << std::endl;
+				std::cerr << "[WARNING] FetchThread: Player wait_for timeout" << std::endl;
 				break;
 			}
+
+
+			
 			sRun[_deviceIdx] = false;
 			lk.unlock();
 		}
 
 		k4a_capture_t cpt;
-		try {
-			if (!K4A_WAIT_RESULT_SUCCEEDED == k4a_device_get_capture(_hDev, &cpt, K4A_WAIT_INFINITE)) {
-				std::cerr << "[ERROR] CaptureFrame: Fail to get capture of device " << _deviceIdx << " !" << std::endl;
-				exit(-1);
-			}
+		if (!K4A_WAIT_RESULT_SUCCEEDED == k4a_device_get_capture(_hDev, &cpt, K4A_WAIT_INFINITE)) {
+			std::cerr << "[ERROR] CaptureFrame: Fail to get capture of device " << _deviceIdx << " !" << std::endl;
+			exit(-1);
 		}
-		catch (std::runtime_error& e) {
-			std::cerr << "[ERROR] CaptureFrame: " << e.what() << std::endl;
-			break;
-		}
+
 		idx++;
 
 		cv::Mat depth;
@@ -523,7 +531,7 @@ bool K4aCameraImpl::FetchFrame(uint8_t* color, size_t inSzColor, size_t* outSzCo
 			*outSzColor = sz_color;
 		}
 	}
-	std::cout << "Timestamp of device " << _deviceIdx << " of frame idx " << frm.idx << "is" << frm.timestamp << std::endl;
+	//std::cout << "Timestamp of device " << _deviceIdx << " of frame idx " << frm.idx << "is" << frm.timestamp << std::endl;
 	if (idx) {
 		*idx = frm.idx;
 	}
