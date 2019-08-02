@@ -101,7 +101,7 @@ void CreateFolderSubFolders(const string& folder_path, size_t num) {
 	for (size_t i = 0; i < num; i++) {
 		stringstream folder_tag;
 		folder_tag << (i + 1);
-		string sub_folder = folder_path + folder_tag.str();
+		string sub_folder = folder_path + folder_tag.str() + "\\";
 		fs::create_directory(sub_folder);
 	}
 }
@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
 	if ( argc == 4 ) {
 		mode = IMAGE_ONLY;
 		image_num = atoi(argv[2]);
-		image_folder_name = string(argv[3]);
+		image_folder_name = fs::absolute(string(argv[3])).string();
 		if (strcmp(argv[1], "-AUTO")) {
 
 		}
@@ -129,37 +129,24 @@ int main(int argc, char* argv[]) {
 	}
 	else if ( argc == 2 ) {
 		mode = TRINSIC_ONLY;
-		trinsic_folder_name = string(argv[1]);
+		trinsic_folder_name = fs::absolute(string(argv[1])).string();
 	}
 	else if (argc == 5 ) {
 		mode = IMAGE_TRINSIC;
 		image_num = atoi(argv[2]);
-		image_folder_name = string(argv[3]);
-		trinsic_folder_name = string(argv[4]);
+		image_folder_name = fs::absolute(string(argv[3])).string();
+		trinsic_folder_name = fs::absolute(string(argv[4])).string();
 	}
 	else {
-		cout << "Usage: # Record Image Only   # : exe -AUTO MAX_IMAGE_NUMBER IMAGE_FOLDER \n";
-		cout << "       # Record Image Only   # : exe -MANUAL MAX_IMAGE_NUMBER IMAGE_FOLDER \n";
-		cout << "       # Record Trinsic Only # : exe TRINSIC_FOLDER\n";
-		cout << "       # Record Both         # : exe -AUTO MAX_IMAGE_NUMBER IMAGE_FOLDER TRINSIC_FOLDER\n";
+		cout << "Usage: # Record Image Only   # : exe -[AUTO|MANUAL] [MAX_IMAGE_NUMBER] [IMAGE_FOLDER] \n";
+		cout << "       # Record Trinsic Only # : exe [TRINSIC_FOLDER] \n";
+		cout << "       # Record Both         # : exe -[AUTO|MANUAL] [MAX_IMAGE_NUMBER] [IMAGE_FOLDER] [TRINSIC_FOLDER]\n";
 		exit(0);
 	}
 
 	/* Check camera amount */
 	size_t camera_amount = K4aCamera::DetectCameras();
 	size_t master_idx;
-
-	/* Create folder */
-	if (mode == IMAGE_ONLY) {
-		CreateFolderSubFolders(image_folder_name, camera_amount);
-	}
-	else if (mode == TRINSIC_ONLY) {
-		CreateFolderSubFolders(trinsic_folder_name, camera_amount);
-	}
-	else {
-		CreateFolderSubFolders(image_folder_name, camera_amount);
-		CreateFolderSubFolders(trinsic_folder_name, camera_amount);
-	}
 
 	if (camera_amount == 0) {
 		cout << "No camera found!" << endl;
@@ -171,23 +158,58 @@ int main(int argc, char* argv[]) {
 	else {
 		master_idx = camera_amount - 1;
 	}
+	cout << "+Detect " << camera_amount << " cameras" << endl;
+
+
+	/* Create folder */
+	if (mode == IMAGE_ONLY) {
+		CreateFolderSubFolders(image_folder_name + "\\color\\", camera_amount);
+		cout << "+Init color image folders" << endl;
+		CreateFolderSubFolders(image_folder_name + "\\depth\\", camera_amount);
+		cout << "+Init depth image folders" << endl;
+	}
+	else if (mode == TRINSIC_ONLY) {
+		CreateFolderSubFolders(trinsic_folder_name, camera_amount);
+		cout << "+Init trinsic image folders" << endl;
+	}
+	else {
+		CreateFolderSubFolders(image_folder_name + "\\color\\", camera_amount);
+		cout << "+Init color image folders" << endl;
+		CreateFolderSubFolders(image_folder_name + "\\depth\\", camera_amount);
+		cout << "+Init depth image folders" << endl;
+		CreateFolderSubFolders(trinsic_folder_name, camera_amount);
+		cout << "+Init trinsic image folders" << endl;
+	}
 
 	/* Init device */
 	vector<unique_ptr<K4aCamera>> k4a_cameras;
-	for (size_t i = 0; i < camera_amount; i++) {
-		if (i == master_idx) {
-			k4a_cameras.push_back(make_unique<K4aCamera>(i, true));
+	try {
+		for (size_t i = 0; i < camera_amount; i++) {
+			if (i == master_idx) {
+				k4a_cameras.push_back(make_unique<K4aCamera>(i, true));
+			}
+			else {
+				k4a_cameras.push_back(make_unique<K4aCamera>(i, false));
+			}
 		}
-		else {
-			k4a_cameras.push_back(make_unique<K4aCamera>(i, false));
-		}
+		cout << "+Open devices" << endl;
 	}
+	catch (std::runtime_error& e) {
+		cout << "-Open devices" << endl;
+	}
+	
 	/* Ensure that the master is started after all sub started*/
 	/* Defeult 30fps, BGRA32, NFOV_UNBINNED, 1080P*/
-	for (size_t i = 0; i < camera_amount; i++) {
-		k4a_cameras[i]->StartCamera();
+	try {
+		for (size_t i = 0; i < camera_amount; i++) {
+			k4a_cameras[i]->StartCamera();
+		}
+		cout << "+Open cameras" << endl;
 	}
-
+	catch (std::runtime_error &e){
+		cout << "-Open cameras" << endl;
+	}
+	
 	/* Get the intrinsic of color */
 	/* Get the intrinsic of depth */
 	/* Get the extrinsic of color to depth */
@@ -242,46 +264,55 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	size_t image_selected = 0;
-	while (image_selected < numpics) {
-		
-		/* Add interact for manual ESC end */
-		if (_kbhit()) {
-			char ch = _getch();
-			if (ch == 27) { break; }
-		}
+	try {
+		size_t image_selected = 0;
+		while (image_selected < numpics) {
 
-		/* Read image from camera */
-		for (size_t i = 0; i < camera_amount; i++) {
-			k4a_cameras[i]->FetchFrame((uint8_t*)color_images[i][image_selected].data, in_size_color, &out_size_color,
-				(uint16_t*)depth_images[i][image_selected].data, in_size_depth, &out_size_depth);
-		}
-
-		/* Write color depth image into file*/
-		if ( auto_save || (_kbhit() && (!auto_save)) ) {
-			char cnt[10];
-			sprintf_s(cnt, "%zd", image_selected);
-			for (size_t i = 0; i < camera_amount; i++) {
-				std::stringstream folder_tag;
-				folder_tag << (i + 1);
-				string color_path = image_folder_name + "color\\" + folder_tag.str() + "\\";
-				string color_name = "image.cam0" + folder_tag.str() + "_" + string(cnt) + ".jpg";
-
-				string depth_path = image_folder_name + "depth\\" + folder_tag.str() + "\\";
-				string depth_name = "image.cam0" + folder_tag.str() + "_" + string(cnt) + ".png";
-				cv::imwrite(color_path + color_name, color_images[i][image_selected]);
-				cv::imwrite(depth_path + depth_name, depth_images[i][image_selected]);
+			/* Add interact for manual ESC end */
+			if (_kbhit()) {
+				char ch = _getch();
+				if (ch == 27) { break; }
 			}
-			image_selected++;
+
+			/* Read image from camera */
+			for (size_t i = 0; i < camera_amount; i++) {
+				k4a_cameras[i]->FetchFrame((uint8_t*)color_images[i][image_selected].data, in_size_color, &out_size_color,
+					(uint16_t*)depth_images[i][image_selected].data, in_size_depth, &out_size_depth);
+			}
+
+			/* Write color depth image into file*/
+			if (auto_save || (_kbhit() && (!auto_save))) {
+				char cnt[10];
+				sprintf_s(cnt, "%zd", image_selected);
+				for (size_t i = 0; i < camera_amount; i++) {
+					std::stringstream folder_tag;
+					folder_tag << (i + 1);
+					string color_path = image_folder_name + "color\\" + folder_tag.str() + "\\";
+					string color_name = "image.cam0" + folder_tag.str() + "_" + string(cnt) + ".jpg";
+
+					string depth_path = image_folder_name + "depth\\" + folder_tag.str() + "\\";
+					string depth_name = "image.cam0" + folder_tag.str() + "_" + string(cnt) + ".png";
+					cv::imwrite(color_path + color_name, color_images[i][image_selected]);
+					cv::imwrite(depth_path + depth_name, depth_images[i][image_selected]);
+				}
+				image_selected++;
+				cout << "Record images number " << image_selected << endl;
+			}
+			size_t frame_size = k4a_cameras[0]->GetSyncQueueSize();
+			for (size_t i = 0; frame_size > 2 && i < camera_amount; i++) {
+				k4a_cameras[i]->PopFrontSyncQueue(frame_size - 1);
+			}
+			vector<cv::Mat> disply_images;
+			for (size_t i = 0; i < camera_amount; i++) {
+				disply_images.push_back(color_images[i][image_selected]);
+			}
+
+			ShowManyImages("Current Images", disply_images);
 		}
-		size_t frame_size = k4a_cameras[0]->GetSyncQueueSize();
-		for (size_t i = 0; frame_size > 2 && i < camera_amount; i++) {
-			k4a_cameras[i]->PopFrontSyncQueue(frame_size - 1);
-		}
-		//ShowManyImages("Images", color_images);
+		cout << "+Congratulations" << endl;
 	}
-
-
-
+	catch (std::runtime_error &e){
+		cout << "-Congratulations" << endl;
+	}
 	return 0;
 }
