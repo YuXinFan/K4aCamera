@@ -111,6 +111,12 @@ enum {
 	IMAGE_TRINSIC
 };
 
+void PrintUsage() {
+	cout << "Usage: # Record Image Only   # : exe -[AUTO|MANUAL] [MAX_IMAGE_NUMBER] [IMAGE_FOLDER] \n";
+	cout << "       # Record Trinsic Only # : exe [TRINSIC_FOLDER] \n";
+	cout << "       # Record Both         # : exe -[AUTO|MANUAL] [MAX_IMAGE_NUMBER] [IMAGE_FOLDER] [TRINSIC_FOLDER]\n";
+	exit(0);
+}
 int main(int argc, char* argv[]) {
 	uint32_t mode = 0;
 	uint32_t image_num = 0;
@@ -120,11 +126,14 @@ int main(int argc, char* argv[]) {
 		mode = IMAGE_ONLY;
 		image_num = atoi(argv[2]);
 		image_folder_name = fs::absolute(string(argv[3])).string();
-		if (strcmp(argv[1], "-AUTO")) {
-
+		if (strcmp(argv[1], "-AUTO") == 0) {
+			auto_save = true;
 		}
-		else if (strcmp(argv[1], "-MANUAL")) {
-
+		else if (strcmp(argv[1], "-MANUAL") == 0) {
+			auto_save = false;
+		}
+		else {
+			PrintUsage();
 		}
 	}
 	else if ( argc == 2 ) {
@@ -138,10 +147,7 @@ int main(int argc, char* argv[]) {
 		trinsic_folder_name = fs::absolute(string(argv[4])).string();
 	}
 	else {
-		cout << "Usage: # Record Image Only   # : exe -[AUTO|MANUAL] [MAX_IMAGE_NUMBER] [IMAGE_FOLDER] \n";
-		cout << "       # Record Trinsic Only # : exe [TRINSIC_FOLDER] \n";
-		cout << "       # Record Both         # : exe -[AUTO|MANUAL] [MAX_IMAGE_NUMBER] [IMAGE_FOLDER] [TRINSIC_FOLDER]\n";
-		exit(0);
+		PrintUsage();
 	}
 
 	/* Check camera amount */
@@ -213,31 +219,39 @@ int main(int argc, char* argv[]) {
 	/* Get the intrinsic of color */
 	/* Get the intrinsic of depth */
 	/* Get the extrinsic of color to depth */
-	std::string file_path_base;
-	for (size_t i = 0; i < camera_amount; i++) {
-		stringstream folder_tag;
-		folder_tag << (i + 1);
-		shared_ptr<Intrinsic> depth_in = k4a_cameras[i]->GetDepthIntrinsic();
-		cv::Mat depth_in_mat(3, 3, CV_32F, depth_in->intrinsic);
-		string depth_in_path_name = trinsic_folder_name + "\\" + folder_tag.str() + "depth_intrinsic.xml";
-		cv::FileStorage depth_xml(depth_in_path_name, cv::FileStorage::WRITE);
-		depth_xml << depth_in_mat;
-		depth_xml.release();
+	if (mode != IMAGE_ONLY) {
+		for (size_t i = 0; i < camera_amount; i++) {
+			stringstream folder_tag;
+			folder_tag << (i + 1);
+			shared_ptr<Intrinsic> depth_in = k4a_cameras[i]->GetDepthIntrinsic();
+			cv::Mat depth_in_mat(3, 3, CV_32F, depth_in->intrinsic);
+			string depth_in_path_name = trinsic_folder_name + "\\" + folder_tag.str() + "\\depth_intrinsic.xml";
+			cv::FileStorage depth_xml(depth_in_path_name, cv::FileStorage::WRITE);
+			depth_xml << "M" << depth_in_mat;
+			depth_xml.release();
 
-		shared_ptr<Intrinsic> color_in = k4a_cameras[i]->GetColorIntrinsic();
-		cv::Mat color_in_mat(3, 3, CV_32F, color_in->intrinsic);
-		string color_in_path_name = trinsic_folder_name + "\\" + folder_tag.str() + "color_intrinsic.xml";
-		cv::FileStorage color_xml(color_in_path_name, cv::FileStorage::WRITE);
-		color_xml << color_in_mat;
-		color_xml.release();
+			cout << "+Depth intrinsic of camera :" << i << endl;
+			
+			shared_ptr<Intrinsic> color_in = k4a_cameras[i]->GetColorIntrinsic();
+			cv::Mat color_in_mat(3, 3, CV_32F, color_in->intrinsic);
+			string color_in_path_name = trinsic_folder_name + "\\" + folder_tag.str() + "\\color_intrinsic.xml";
+			cv::FileStorage color_xml(color_in_path_name, cv::FileStorage::WRITE);
+			color_xml << "M" << color_in_mat;
+			color_xml.release();
 
-		shared_ptr<Extrinsic> color_to_depth_ex = k4a_cameras[i]->GetColor2DepthExtrinsic();
-		cv::Mat color_to_depth_ex_mat(3, 3, CV_32F, color_to_depth_ex->extrinsic);
-		string color_to_depth_ex_path_name = trinsic_folder_name + "\\" + folder_tag.str() + "color2depth.xml";
-		cv::FileStorage color_to_depth_xml(color_to_depth_ex_path_name, cv::FileStorage::WRITE);
-		color_to_depth_xml << color_to_depth_ex_mat;
-		color_to_depth_xml.release();
+			cout << "+Color intrinsic of camera :" << i << endl;
+
+			shared_ptr<Extrinsic> color_to_depth_ex = k4a_cameras[i]->GetColor2DepthExtrinsic();
+			cv::Mat color_to_depth_ex_mat(3, 3, CV_32F, color_to_depth_ex->extrinsic);
+			string color_to_depth_ex_path_name = trinsic_folder_name + "\\" + folder_tag.str() + "\\color2depth.xml";
+			cv::FileStorage color_to_depth_xml(color_to_depth_ex_path_name, cv::FileStorage::WRITE);
+			color_to_depth_xml << "M" << color_to_depth_ex_mat;
+			color_to_depth_xml.release();
+
+			cout << "+Color to depth extrinsic of camera :" << i << endl;
+		}
 	}
+
 
 	if (mode == TRINSIC_ONLY) {
 		return 0;
@@ -264,8 +278,8 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
+	size_t image_selected = 0;
 	try {
-		size_t image_selected = 0;
 		while (image_selected < numpics) {
 
 			/* Add interact for manual ESC end */
@@ -280,21 +294,14 @@ int main(int argc, char* argv[]) {
 					(uint16_t*)depth_images[i][image_selected].data, in_size_depth, &out_size_depth);
 			}
 
+			vector<cv::Mat> disply_images;
+			for (size_t i = 0; i < camera_amount; i++) {
+				disply_images.push_back(color_images[i][image_selected]);
+			}
+			ShowManyImages("Current Images", disply_images);
+
 			/* Write color depth image into file*/
 			if (auto_save || (_kbhit() && (!auto_save))) {
-				char cnt[10];
-				sprintf_s(cnt, "%zd", image_selected);
-				for (size_t i = 0; i < camera_amount; i++) {
-					std::stringstream folder_tag;
-					folder_tag << (i + 1);
-					string color_path = image_folder_name + "color\\" + folder_tag.str() + "\\";
-					string color_name = "image.cam0" + folder_tag.str() + "_" + string(cnt) + ".jpg";
-
-					string depth_path = image_folder_name + "depth\\" + folder_tag.str() + "\\";
-					string depth_name = "image.cam0" + folder_tag.str() + "_" + string(cnt) + ".png";
-					cv::imwrite(color_path + color_name, color_images[i][image_selected]);
-					cv::imwrite(depth_path + depth_name, depth_images[i][image_selected]);
-				}
 				image_selected++;
 				cout << "Record images number " << image_selected << endl;
 			}
@@ -302,17 +309,42 @@ int main(int argc, char* argv[]) {
 			for (size_t i = 0; frame_size > 2 && i < camera_amount; i++) {
 				k4a_cameras[i]->PopFrontSyncQueue(frame_size - 1);
 			}
-			vector<cv::Mat> disply_images;
-			for (size_t i = 0; i < camera_amount; i++) {
-				disply_images.push_back(color_images[i][image_selected]);
-			}
+			
 
-			ShowManyImages("Current Images", disply_images);
+			
 		}
-		cout << "+Congratulations" << endl;
+		cout << "+Record images" << endl;
+		
 	}
 	catch (std::runtime_error &e){
+		cout << "[ERROR]: " << e.what() << endl;
 		cout << "-Congratulations" << endl;
 	}
+
+	for (size_t i = 0; i < camera_amount; i++) {
+		k4a_cameras[i]->StopCamera();
+	}
+
+	cout << "-Saving images to disk, please wait" << endl;
+	for (size_t i = 0; i < camera_amount; i++) {
+		std::stringstream folder_tag;
+		folder_tag << (i + 1);
+		for (size_t j = 0; j < image_selected; j++) {
+			char cnt[10];
+			sprintf_s(cnt, "%zd", j);
+
+			string color_path = image_folder_name + "color\\" + folder_tag.str() + "\\";
+			string color_name = "image.cam0" + folder_tag.str() + "_" + string(cnt) + ".jpg";
+
+			string depth_path = image_folder_name + "depth\\" + folder_tag.str() + "\\";
+			string depth_name = "image.cam0" + folder_tag.str() + "_" + string(cnt) + ".png";
+
+			cv::imwrite(color_path + color_name, color_images[i][j]);
+			cv::imwrite(depth_path + depth_name, depth_images[i][j]);
+		}
+	}
+	cout << "+Save images to disk" << endl;
+	cout << "+Congratulations" << endl;
+	
 	return 0;
 }
