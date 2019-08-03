@@ -49,6 +49,7 @@ public:
 	EXPORT shared_ptr<Intrinsic> GetDepthIntrinsic() const;
 	EXPORT shared_ptr<Intrinsic> GetColorIntrinsic() const;
 	EXPORT shared_ptr<Extrinsic> GetColor2DepthExtrinsic() const;
+	EXPORT shared_ptr<Extrinsic> GetDepth2ColorExtrinsic() const;
 
 	/* Depth image pixel format is uint16_t. It's size should be W*H*2 bytes.
 	 * Color image pixel format is BGRA. It's size should be W*H*4 bytes.

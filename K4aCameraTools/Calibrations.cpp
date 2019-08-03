@@ -249,6 +249,15 @@ int main(int argc, char* argv[]) {
 			color_to_depth_xml.release();
 
 			cout << "+Color to depth extrinsic of camera :" << i << endl;
+
+			shared_ptr<Extrinsic> depth_to_color_ex = k4a_cameras[i]->GetDepth2ColorExtrinsic();
+			cv::Mat depth_to_color_ex_mat(3, 3, CV_32F, depth_to_color_ex->extrinsic);
+			string depth_to_color_ex_path_name = trinsic_folder_name + "\\" + folder_tag.str() + "\\depth2color.xml";
+			cv::FileStorage depth_to_color_xml(depth_to_color_ex_path_name, cv::FileStorage::WRITE);
+			depth_to_color_xml << "M" << depth_to_color_ex_mat;
+			depth_to_color_xml.release();
+
+			cout << "+Color to depth extrinsic of camera :" << i << endl;
 		}
 	}
 

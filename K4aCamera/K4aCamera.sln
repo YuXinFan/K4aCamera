@@ -13,12 +13,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "K4aCameraTools", "..\K4aCam
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		CMake-Debug|x64 = CMake-Debug|x64
+		CMake-Debug|x86 = CMake-Debug|x86
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4D01D603-380E-4934-9B03-2A04C2CB4238}.CMake-Debug|x64.ActiveCfg = CMake-Debug|x64
+		{4D01D603-380E-4934-9B03-2A04C2CB4238}.CMake-Debug|x64.Build.0 = CMake-Debug|x64
+		{4D01D603-380E-4934-9B03-2A04C2CB4238}.CMake-Debug|x86.ActiveCfg = CMake-Debug|Win32
+		{4D01D603-380E-4934-9B03-2A04C2CB4238}.CMake-Debug|x86.Build.0 = CMake-Debug|Win32
 		{4D01D603-380E-4934-9B03-2A04C2CB4238}.Debug|x64.ActiveCfg = Debug|x64
 		{4D01D603-380E-4934-9B03-2A04C2CB4238}.Debug|x64.Build.0 = Debug|x64
 		{4D01D603-380E-4934-9B03-2A04C2CB4238}.Debug|x86.ActiveCfg = Debug|Win32
@@ -27,6 +33,10 @@ Global
 		{4D01D603-380E-4934-9B03-2A04C2CB4238}.Release|x64.Build.0 = Release|x64
 		{4D01D603-380E-4934-9B03-2A04C2CB4238}.Release|x86.ActiveCfg = Release|Win32
 		{4D01D603-380E-4934-9B03-2A04C2CB4238}.Release|x86.Build.0 = Release|Win32
+		{ADA47A21-E1B1-4A01-B5F8-43CE30CD543D}.CMake-Debug|x64.ActiveCfg = CMake-Debug|x64
+		{ADA47A21-E1B1-4A01-B5F8-43CE30CD543D}.CMake-Debug|x64.Build.0 = CMake-Debug|x64
+		{ADA47A21-E1B1-4A01-B5F8-43CE30CD543D}.CMake-Debug|x86.ActiveCfg = CMake-Debug|Win32
+		{ADA47A21-E1B1-4A01-B5F8-43CE30CD543D}.CMake-Debug|x86.Build.0 = CMake-Debug|Win32
 		{ADA47A21-E1B1-4A01-B5F8-43CE30CD543D}.Debug|x64.ActiveCfg = Debug|x64
 		{ADA47A21-E1B1-4A01-B5F8-43CE30CD543D}.Debug|x64.Build.0 = Debug|x64
 		{ADA47A21-E1B1-4A01-B5F8-43CE30CD543D}.Debug|x86.ActiveCfg = Debug|Win32
@@ -35,6 +45,10 @@ Global
 		{ADA47A21-E1B1-4A01-B5F8-43CE30CD543D}.Release|x64.Build.0 = Release|x64
 		{ADA47A21-E1B1-4A01-B5F8-43CE30CD543D}.Release|x86.ActiveCfg = Release|Win32
 		{ADA47A21-E1B1-4A01-B5F8-43CE30CD543D}.Release|x86.Build.0 = Release|Win32
+		{4E8787B3-6723-47F4-994E-C450F5002144}.CMake-Debug|x64.ActiveCfg = CMake-Debug|x64
+		{4E8787B3-6723-47F4-994E-C450F5002144}.CMake-Debug|x64.Build.0 = CMake-Debug|x64
+		{4E8787B3-6723-47F4-994E-C450F5002144}.CMake-Debug|x86.ActiveCfg = CMake-Debug|Win32
+		{4E8787B3-6723-47F4-994E-C450F5002144}.CMake-Debug|x86.Build.0 = CMake-Debug|Win32
 		{4E8787B3-6723-47F4-994E-C450F5002144}.Debug|x64.ActiveCfg = Debug|x64
 		{4E8787B3-6723-47F4-994E-C450F5002144}.Debug|x64.Build.0 = Debug|x64
 		{4E8787B3-6723-47F4-994E-C450F5002144}.Debug|x86.ActiveCfg = Debug|Win32
@@ -43,6 +57,10 @@ Global
 		{4E8787B3-6723-47F4-994E-C450F5002144}.Release|x64.Build.0 = Release|x64
 		{4E8787B3-6723-47F4-994E-C450F5002144}.Release|x86.ActiveCfg = Release|Win32
 		{4E8787B3-6723-47F4-994E-C450F5002144}.Release|x86.Build.0 = Release|Win32
+		{BF326F62-AF5D-44CB-A0C1-E8EB90643E17}.CMake-Debug|x64.ActiveCfg = CMake-Debug|x64
+		{BF326F62-AF5D-44CB-A0C1-E8EB90643E17}.CMake-Debug|x64.Build.0 = CMake-Debug|x64
+		{BF326F62-AF5D-44CB-A0C1-E8EB90643E17}.CMake-Debug|x86.ActiveCfg = CMake-Debug|Win32
+		{BF326F62-AF5D-44CB-A0C1-E8EB90643E17}.CMake-Debug|x86.Build.0 = CMake-Debug|Win32
 		{BF326F62-AF5D-44CB-A0C1-E8EB90643E17}.Debug|x64.ActiveCfg = Debug|x64
 		{BF326F62-AF5D-44CB-A0C1-E8EB90643E17}.Debug|x64.Build.0 = Debug|x64
 		{BF326F62-AF5D-44CB-A0C1-E8EB90643E17}.Debug|x86.ActiveCfg = Debug|Win32

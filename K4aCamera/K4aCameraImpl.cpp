@@ -356,7 +356,33 @@ shared_ptr<Extrinsic> K4aCameraImpl::GetColor2DepthExtrinsic() const {
 	if (!_isOpened) {
 		return nullptr;
 	}
-	k4a_calibration_extrinsics_t ex_param = _colorCalib.extrinsics;
+	k4a_calibration_extrinsics_t ex_param = _deviceCalib.extrinsics[K4A_CALIBRATION_TYPE_COLOR][K4A_CALIBRATION_TYPE_DEPTH];
+
+	shared_ptr<Extrinsic> extrin(new Extrinsic);
+	extrin->extrinsic[0] = ex_param.rotation[0];
+	extrin->extrinsic[1] = ex_param.rotation[1];
+	extrin->extrinsic[2] = ex_param.rotation[2];
+	extrin->extrinsic[3] = ex_param.translation[0];
+	extrin->extrinsic[4] = ex_param.rotation[3];
+	extrin->extrinsic[5] = ex_param.rotation[4];
+	extrin->extrinsic[6] = ex_param.rotation[5];
+	extrin->extrinsic[7] = ex_param.translation[1];
+	extrin->extrinsic[8] = ex_param.rotation[6];
+	extrin->extrinsic[9] = ex_param.rotation[7];
+	extrin->extrinsic[10] = ex_param.rotation[8];
+	extrin->extrinsic[11] = ex_param.translation[2];
+	extrin->extrinsic[12] = 0;
+	extrin->extrinsic[13] = 0;
+	extrin->extrinsic[14] = 0;
+	extrin->extrinsic[15] = 1;
+	return extrin;
+}
+
+shared_ptr<Extrinsic> K4aCameraImpl::GetDepth2ColorExtrinsic() const {
+	if (!_isOpened) {
+		return nullptr;
+	}
+	k4a_calibration_extrinsics_t ex_param = _deviceCalib.extrinsics[K4A_CALIBRATION_TYPE_DEPTH][K4A_CALIBRATION_TYPE_COLOR];
 
 	shared_ptr<Extrinsic> extrin(new Extrinsic);
 	extrin->extrinsic[0] = ex_param.rotation[0];

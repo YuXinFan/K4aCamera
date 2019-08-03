@@ -65,6 +65,7 @@ public:
 	shared_ptr<Intrinsic> GetDepthIntrinsic() const;
 	shared_ptr<Intrinsic> GetColorIntrinsic() const;
 	shared_ptr<Extrinsic> GetColor2DepthExtrinsic() const;
+	shared_ptr<Extrinsic> GetDepth2ColorExtrinsic() const;
 
 	size_t GetSyncQueueSize();
 	void PopFrontSyncQueue(const size_t sz);

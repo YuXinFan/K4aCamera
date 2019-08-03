@@ -47,6 +47,9 @@ shared_ptr<Intrinsic> K4aCamera::GetColorIntrinsic() const { return _pImpl->GetC
 
 shared_ptr<Extrinsic> K4aCamera::GetColor2DepthExtrinsic() const { return _pImpl->GetColor2DepthExtrinsic(); }
 
+shared_ptr<Extrinsic> K4aCamera::GetDepth2ColorExtrinsic() const { return _pImpl->GetDepth2ColorExtrinsic(); }
+
+
 bool K4aCamera::FetchFrame(uint8_t* color, size_t inSzColor, size_t* outSzColor,
 	uint16_t* depth, size_t inSzDepth, size_t* outSzDepth)
 {
